@@ -87,46 +87,49 @@ h1 {
 }
 
 .cell {
-  background: #fdfdfd;
+  background: #ffffff; /* białe pola */
   border-radius: 4px;
   border: 1px solid #aaa;
   position: relative;
 }
 
-/* podstawowa ścieżka dookoła */
+/* Główny tor po obwodzie */
 .cell.track {
-  background: #eaeaea;
+  background: #f7f7f7;
 }
 
-/* Bazy w narożnikach – bardziej jak klasyczny Chińczyk */
-.cell.base {
-  border-radius: 8px;
+/* Korytarze do domku (home rows) */
+.cell.home-red {
+  background: #ffe0e0;
+}
+.cell.home-blue {
+  background: #e0ecff;
+}
+.cell.home-green {
+  background: #e0ffe6;
+}
+.cell.home-yellow {
+  background: #fff7e0;
 }
 
-.cell.base-red {
-  background: #ffe6e6;
-}
-
-.cell.base-blue {
-  background: #e6f0ff;
-}
-
-.cell.base-green {
-  background: #e6ffe9;
-}
-
-.cell.base-yellow {
-  background: #fff9e6;
-}
-
-/* Krzyż w środku planszy */
-.cell.centerPath {
-  background: #ddd;
-}
-
+/* Domek (środek) */
 .cell.center {
   background: #ffffff;
   border: 2px solid #333;
+}
+
+/* Bazy 2x2 w rogach */
+.cell.base-red {
+  background: #ffb3b3;
+}
+.cell.base-blue {
+  background: #b3ccff;
+}
+.cell.base-green {
+  background: #b3ffbf;
+}
+.cell.base-yellow {
+  background: #ffe6a3;
 }
 
 /* Pionki */
@@ -159,7 +162,7 @@ h1 {
   box-shadow: 0 0 6px 3px rgba(0, 0, 0, 0.4);
 }
 
-/* Obszary graczy */
+/* Panel graczy */
 #playersArea {
   grid-column: 2 / 3;
   grid-row: 1 / 3;
@@ -187,7 +190,7 @@ h1 {
   margin-bottom: 5px;
 }
 
-/* Małe pionki w bazie / ukończone */
+/* Małe pionki dla ukończonych */
 .pawnsHome .pawn {
   position: static;
   transform: none;
