@@ -181,6 +181,14 @@ function createBoard() {
     trackCellsByIndex[index] = cell;
   });
 
+  // oznacz pola startowe na mocniejszy szary
+  PLAYERS.forEach(playerDef => {
+    const startIdx = playerDef.startIndex;
+    const pos = BOARD_PATH[startIdx];
+    const cell = cellMatrix[pos.row][pos.col];
+    cell.classList.add("start-track");
+  });
+
   // bazy 2x2
   BASE_CELLS.red.forEach(pos => {
     cellMatrix[pos.row][pos.col].classList.add("base-red");
