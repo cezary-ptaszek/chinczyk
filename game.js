@@ -2,98 +2,120 @@
 
 const BOARD_SIZE = 11;
 
-// === ŚCIEŻKA PO KRZYŻU (PLUS) =======================================
-// Gramy tylko po polach krzyża (pion + poziom przez środek).
-// Robimy pętlę: góra -> środek -> prawo -> środek -> dół -> środek -> lewo -> środek -> góra.
+// --- Ścieżka po obwodzie (40 pól) ------------------------------------
+const BOARD_PATH = [];
 
-const CROSS_PATH = [];
-
-function addCoord(r, c) {
-  CROSS_PATH.push({ row: r, col: c });
+// góra (0,0) -> (0,10)
+for (let c = 0; c < BOARD_SIZE; c++) {
+  BOARD_PATH.push({ row: 0, col: c });
+}
+// prawa (1,10) -> (10,10)
+for (let r = 1; r < BOARD_SIZE; r++) {
+  BOARD_PATH.push({ row: r, col: BOARD_SIZE - 1 });
+}
+// dół (10,9) -> (10,0)
+for (let c = BOARD_SIZE - 2; c >= 0; c--) {
+  BOARD_PATH.push({ row: BOARD_SIZE - 1, col: c });
+}
+// lewa (9,0) -> (1,0)
+for (let r = BOARD_SIZE - 2; r >= 1; r--) {
+  BOARD_PATH.push({ row: r, col: 0 });
 }
 
-// Segment A: góra -> środek
-addCoord(0, 5);
-addCoord(1, 5);
-addCoord(2, 5);
-addCoord(3, 5);
-addCoord(4, 5);
-addCoord(5, 5); // środek
+const BOARD_LEN = BOARD_PATH.length; // 40
+const HOME_LEN = 4;
 
-// Segment B: środek -> prawo (do (5,10))
-addCoord(5, 6);
-addCoord(5, 7);
-addCoord(5, 8);
-addCoord(5, 9);
-addCoord(5, 10);
+// --- Home rows (korytarze do domku) ----------------------------------
+// domek = (5,5)
+const CENTER = { row: 5, col: 5 };
 
-// Segment C: prawo -> środek
-addCoord(5, 9);
-addCoord(5, 8);
-addCoord(5, 7);
-addCoord(5, 6);
-addCoord(5, 5);
-
-// Segment D: środek -> dół (do (10,5))
-addCoord(6, 5);
-addCoord(7, 5);
-addCoord(8, 5);
-addCoord(9, 5);
-addCoord(10, 5);
-
-// Segment E: dół -> środek
-addCoord(9, 5);
-addCoord(8, 5);
-addCoord(7, 5);
-addCoord(6, 5);
-addCoord(5, 5);
-
-// Segment F: środek -> lewo (do (5,0))
-addCoord(5, 4);
-addCoord(5, 3);
-addCoord(5, 2);
-addCoord(5, 1);
-addCoord(5, 0);
-
-// Segment G: lewo -> środek
-addCoord(5, 1);
-addCoord(5, 2);
-addCoord(5, 3);
-addCoord(5, 4);
-addCoord(5, 5);
-
-// Segment H: środek -> góra (zamyka pętlę do (0,5))
-addCoord(4, 5);
-addCoord(3, 5);
-addCoord(2, 5);
-addCoord(1, 5);
-addCoord(0, 5);
-
-const BOARD_LEN = CROSS_PATH.length; // długość pętli
-
-// Startowe pola (koordynaty na krzyżu)
-const START_COORDS = {
-  red: { row: 0, col: 5 },    // góra
-  blue: { row: 5, col: 10 },  // prawo
-  yellow: { row: 10, col: 5 },// dół
-  green: { row: 5, col: 0 }   // lewo
+const HOME_PATH = {
+  red: [
+    { row: 1, col: 5 },
+    { row: 2, col: 5 },
+    { row: 3, col: 5 },
+    { row: 4, col: 5 }
+  ],
+  blue: [
+    { row: 5, col: 9 },
+    { row: 5, col: 8 },
+    { row: 5, col: 7 },
+    { row: 5, col: 6 }
+  ],
+  yellow: [
+    { row: 9, col: 5 },
+    { row: 8, col: 5 },
+    { row: 7, col: 5 },
+    { row: 6, col: 5 }
+  ],
+  green: [
+    { row: 5, col: 1 },
+    { row: 5, col: 2 },
+    { row: 5, col: 3 },
+    { row: 5, col: 4 }
+  ]
 };
 
-const PLAYER_COLORS = ["red", "blue", "green", "yellow"];
+// --- Punkty wejścia do home row na torze -----------------------------
+// Komórki w BOARD_PATH odpowiadające wejściu do korytarzy
+// top: (0,5), right: (5,10), bottom: (10,5), left: (5,0)
+const ENTRY_INDEX = {
+  red: BOARD_PATH.findIndex(p => p.row === 0 && p.col === 5),
+  blue: BOARD_PATH.findIndex(p => p.row === 5 && p.col === 10),
+  yellow: BOARD_PATH.findIndex(p => p.row === 10 && p.col === 5),
+  green: BOARD_PATH.findIndex(p => p.row === 5 && p.col === 0)
+};
+
+// --- Bazy 2x2 w rogach -----------------------------------------------
+const BASE_CELLS = {
+  red: [
+    { row: 0, col: 0 },
+    { row: 0, col: 1 },
+    { row: 1, col: 0 },
+    { row: 1, col: 1 }
+  ],
+  blue: [
+    { row: 0, col: 9 },
+    { row: 0, col: 10 },
+    { row: 1, col: 9 },
+    { row: 1, col: 10 }
+  ],
+  green: [
+    { row: 9, col: 0 },
+    { row: 10, col: 0 },
+    { row: 9, col: 1 },
+    { row: 10, col: 1 }
+  ],
+  yellow: [
+    { row: 9, col: 9 },
+    { row: 9, col: 10 },
+    { row: 10, col: 9 },
+    { row: 10, col: 10 }
+  ]
+};
+
+// --- Startowe pola na torze ------------------------------------------
+// Po pełnym okrążeniu (40) pionek trafia na ENTRY_INDEX,
+// więc startIndex to (ENTRY_INDEX + 1) % 40.
+const PLAYERS = [
+  { color: "red", startIndex: (ENTRY_INDEX.red + 1) % BOARD_LEN },
+  { color: "blue", startIndex: (ENTRY_INDEX.blue + 1) % BOARD_LEN },
+  { color: "green", startIndex: (ENTRY_INDEX.green + 1) % BOARD_LEN },
+  { color: "yellow", startIndex: (ENTRY_INDEX.yellow + 1) % BOARD_LEN }
+];
+
 const PAWNS_PER_PLAYER = 4;
 
-// DOM
+// --- DOM -------------------------------------------------------------
 const boardEl = document.getElementById("board");
 const currentPlayerSpan = document.getElementById("currentPlayer");
 const diceResultSpan = document.getElementById("diceResult");
 const rollBtn = document.getElementById("rollBtn");
 const messageP = document.getElementById("message");
 
-// Plansza (macierz komórek)
 const cellMatrix = [];
 let trackCellsByIndex = [];
 
-// Stan gry
 let players = [];
 let currentPlayerIndex = 0;
 let rolledDice = null;
@@ -101,8 +123,7 @@ let selectablePawns = [];
 let winner = null;
 let canRoll = true;
 
-// === TWORZENIE PLANSZY ===============================================
-
+// --- Tworzenie planszy ----------------------------------------------
 function createBoard() {
   boardEl.innerHTML = "";
   cellMatrix.length = 0;
@@ -121,76 +142,96 @@ function createBoard() {
     cellMatrix.push(rowArr);
   }
 
-  // Zaznacz ścieżkę po krzyżu – tylko te pola są "track"
-  CROSS_PATH.forEach((pos, index) => {
+  // tor po obwodzie
+  BOARD_PATH.forEach((pos, index) => {
     const cell = cellMatrix[pos.row][pos.col];
-    cell.classList.add("track", "centerPath");
-    // środek wyróżniamy dodatkowo
-    if (pos.row === 5 && pos.col === 5) {
-      cell.classList.add("center");
-    }
+    cell.classList.add("track");
     cell.dataset.trackIndex = index;
     trackCellsByIndex[index] = cell;
   });
+
+  // bazy 2x2
+  BASE_CELLS.red.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("base-red");
+  });
+  BASE_CELLS.blue.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("base-blue");
+  });
+  BASE_CELLS.green.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("base-green");
+  });
+  BASE_CELLS.yellow.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("base-yellow");
+  });
+
+  // korytarze do domu
+  HOME_PATH.red.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("home-red");
+  });
+  HOME_PATH.blue.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("home-blue");
+  });
+  HOME_PATH.yellow.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("home-yellow");
+  });
+  HOME_PATH.green.forEach(pos => {
+    cellMatrix[pos.row][pos.col].classList.add("home-green");
+  });
+
+  // domek
+  cellMatrix[CENTER.row][CENTER.col].classList.add("center");
 }
 
-// === GRACZE I PIONKI =================================================
-
-function findPathIndexForCoord(coord) {
-  return CROSS_PATH.findIndex(
-    (p) => p.row === coord.row && p.col === coord.col
-  );
-}
-
+// --- Tworzenie graczy i pionków -------------------------------------
 function createPlayers() {
-  players = PLAYER_COLORS.map((color) => {
-    const startIndex = findPathIndexForCoord(START_COORDS[color]);
-    if (startIndex === -1) {
-      console.error("Brak pola startowego na ścieżce dla koloru:", color);
-    }
-
+  players = PLAYERS.map(playerDef => {
+    const { color, startIndex } = playerDef;
     const pawns = [];
     for (let i = 0; i < PAWNS_PER_PLAYER; i++) {
       pawns.push({
         id: `${color}-${i}`,
         color,
-        state: "home", // "home" | "track" | "finished"
+        state: "home", // "home" | "track" | "homeRow" | "finished"
         trackIndex: null,
-        stepsMoved: 0
+        homeIndex: null,
+        stepsMoved: 0,
+        baseIndex: i // który kwadrat w bazie
       });
     }
-
-    return {
-      color,
-      startIndex,
-      pawns
-    };
+    return { color, startIndex, pawns };
   });
 }
 
+// --- Render pionków --------------------------------------------------
 function clearPawnsFromBoard() {
-  document.querySelectorAll(".cell .pawn").forEach((el) => el.remove());
-  document.querySelectorAll(".pawnsHome .pawn").forEach((el) => el.remove());
+  document.querySelectorAll(".cell .pawn").forEach(el => el.remove());
+  document.querySelectorAll(".pawnsHome .pawn").forEach(el => el.remove());
 }
 
 function renderPawns() {
   clearPawnsFromBoard();
 
-  players.forEach((player) => {
-    const homeContainer = document.getElementById(`home-${player.color}`);
+  players.forEach(player => {
     const finishedSpan = document.getElementById(`finished-${player.color}`);
+    const homeContainer = document.getElementById(`home-${player.color}`);
     let finishedCount = 0;
 
-    player.pawns.forEach((pawn) => {
+    player.pawns.forEach(pawn => {
       const pawnEl = document.createElement("div");
       pawnEl.classList.add("pawn", pawn.color);
       pawnEl.dataset.pawnId = pawn.id;
 
       if (pawn.state === "home") {
-        homeContainer.appendChild(pawnEl);
+        const basePos = BASE_CELLS[pawn.color][pawn.baseIndex];
+        const cell = cellMatrix[basePos.row][basePos.col];
+        cell.appendChild(pawnEl);
       } else if (pawn.state === "track") {
         const cell = trackCellsByIndex[pawn.trackIndex];
         if (cell) cell.appendChild(pawnEl);
+      } else if (pawn.state === "homeRow") {
+        const coord = HOME_PATH[pawn.color][pawn.homeIndex];
+        const cell = cellMatrix[coord.row][coord.col];
+        cell.appendChild(pawnEl);
       } else if (pawn.state === "finished") {
         finishedCount++;
         homeContainer.appendChild(pawnEl);
@@ -201,13 +242,12 @@ function renderPawns() {
   });
 }
 
-// === UI ==============================================================
-
+// --- UI --------------------------------------------------------------
 function updateUI() {
   const currentPlayer = players[currentPlayerIndex];
   currentPlayerSpan.textContent = currentPlayer.color.toUpperCase();
 
-  document.querySelectorAll(".playerArea").forEach((area) => {
+  document.querySelectorAll(".playerArea").forEach(area => {
     const color = area.dataset.color;
     area.dataset.active = color === currentPlayer.color ? "true" : "false";
   });
@@ -215,8 +255,7 @@ function updateUI() {
   renderPawns();
 }
 
-// === LOGIKA RUCHU ====================================================
-
+// --- Logika ruchu ----------------------------------------------------
 function getPawnById(id) {
   for (const player of players) {
     for (const pawn of player.pawns) {
@@ -226,7 +265,6 @@ function getPawnById(id) {
   return null;
 }
 
-// Oblicz nową pozycję po rzucie (bez zmiany pionka)
 function computeNewPosition(pawn, player, dice) {
   if (pawn.state === "finished") return { valid: false };
 
@@ -237,35 +275,72 @@ function computeNewPosition(pawn, player, dice) {
       valid: true,
       newState: "track",
       trackIndex: player.startIndex,
+      homeIndex: null,
       stepsMoved: 0
     };
   }
 
+  const maxSteps = BOARD_LEN + HOME_LEN; // pełne okrążenie + 4 pola domku
+
   if (pawn.state === "track") {
     const newSteps = pawn.stepsMoved + dice;
-    const maxSteps = BOARD_LEN; // dokładnie jedno okrążenie po krzyżu
 
     if (newSteps > maxSteps) {
-      // trzeba wejść dokładnie – jak w klasycznym chińczyku
       return { valid: false };
     }
 
-    if (newSteps === maxSteps) {
-      // pionek ukończył rundę
+    if (newSteps < BOARD_LEN) {
+      const trackIndex = (player.startIndex + newSteps) % BOARD_LEN;
       return {
         valid: true,
-        newState: "finished",
-        trackIndex: null,
+        newState: "track",
+        trackIndex,
+        homeIndex: null,
         stepsMoved: newSteps
       };
     }
 
-    // wciąż na trasie
-    const newIndex = (player.startIndex + newSteps) % BOARD_LEN;
+    if (newSteps === maxSteps) {
+      return {
+        valid: true,
+        newState: "finished",
+        trackIndex: null,
+        homeIndex: null,
+        stepsMoved: newSteps
+      };
+    }
+
+    // wejście na korytarz
+    const homeIndex = newSteps - BOARD_LEN; // 0..HOME_LEN-1
     return {
       valid: true,
-      newState: "track",
-      trackIndex: newIndex,
+      newState: "homeRow",
+      trackIndex: null,
+      homeIndex,
+      stepsMoved: newSteps
+    };
+  }
+
+  if (pawn.state === "homeRow") {
+    const newSteps = pawn.stepsMoved + dice;
+    if (newSteps > maxSteps) return { valid: false };
+
+    if (newSteps === maxSteps) {
+      return {
+        valid: true,
+        newState: "finished",
+        trackIndex: null,
+        homeIndex: null,
+        stepsMoved: newSteps
+      };
+    }
+
+    const homeIndex = newSteps - BOARD_LEN;
+    return {
+      valid: true,
+      newState: "homeRow",
+      trackIndex: null,
+      homeIndex,
       stepsMoved: newSteps
     };
   }
@@ -283,21 +358,24 @@ function movePawn(pawn, player, dice) {
 
   pawn.state = res.newState;
   pawn.trackIndex = res.trackIndex;
+  pawn.homeIndex = res.homeIndex;
   pawn.stepsMoved = res.stepsMoved;
 
-  // Zbijanie – tylko gdy pionek stoi na ścieżce
+  // zbijanie tylko na torze (nie w domkach)
   if (pawn.state === "track") {
-    players.forEach((pl) => {
-      pl.pawns.forEach((otherPawn) => {
+    players.forEach(pl => {
+      pl.pawns.forEach(other => {
         if (
-          otherPawn !== pawn &&
-          otherPawn.state === "track" &&
-          otherPawn.trackIndex === pawn.trackIndex &&
-          otherPawn.color !== pawn.color
+          other !== pawn &&
+          other.state === "track" &&
+          other.trackIndex === pawn.trackIndex &&
+          other.color !== pawn.color
         ) {
-          otherPawn.state = "home";
-          otherPawn.trackIndex = null;
-          otherPawn.stepsMoved = 0;
+          // wraca do swojej bazy
+          other.state = "home";
+          other.trackIndex = null;
+          other.homeIndex = null;
+          other.stepsMoved = 0;
         }
       });
     });
@@ -307,38 +385,32 @@ function movePawn(pawn, player, dice) {
 }
 
 function checkWin(player) {
-  return player.pawns.every((p) => p.state === "finished");
+  return player.pawns.every(p => p.state === "finished");
 }
 
-// === WYBÓR PIONKÓW ===================================================
-
+// --- Wybór pionków ---------------------------------------------------
 function highlightSelectablePawns(dice) {
   selectablePawns = [];
-  document.querySelectorAll(".pawn").forEach((p) =>
+  document.querySelectorAll(".pawn").forEach(p =>
     p.classList.remove("selectable")
   );
 
   const currentPlayer = players[currentPlayerIndex];
 
-  currentPlayer.pawns.forEach((pawn) => {
+  currentPlayer.pawns.forEach(pawn => {
     if (canMove(pawn, currentPlayer, dice)) {
       selectablePawns.push(pawn.id);
     }
   });
 
-  selectablePawns.forEach((pawnId) => {
-    document
-      .querySelectorAll(`.pawn[data-pawn-id="${pawnId}"]`)
-      .forEach((el) => el.classList.add("selectable"));
+  selectablePawns.forEach(pawnId => {
+    document.querySelectorAll(`.pawn[data-pawn-id="${pawnId}"]`)
+      .forEach(el => el.classList.add("selectable"));
   });
 }
 
-// --- Obsługa kliknięcia pionka --------------------------------------
-
+// --- Klikanie pionków -----------------------------------------------
 boardEl.addEventListener("click", onPawnClick);
-document.querySelectorAll(".pawnsHome").forEach((container) =>
-  container.addEventListener("click", onPawnClick)
-);
 
 function onPawnClick(e) {
   const pawnEl = e.target.closest(".pawn");
@@ -356,7 +428,7 @@ function onPawnClick(e) {
 
   renderPawns();
 
-  // Wygrana?
+  // wygrana?
   if (checkWin(currentPlayer)) {
     winner = currentPlayerIndex;
     messageP.textContent = `Wygrał gracz: ${currentPlayer.color.toUpperCase()}!`;
@@ -365,28 +437,27 @@ function onPawnClick(e) {
     return;
   }
 
-  // Jeśli 6 – dodatkowa tura po ruchu
+  // dodatkowa tura po 6
   if (rolledDice === 6) {
     messageP.textContent = `Gracz ${currentPlayer.color.toUpperCase()} wyrzucił 6 i ma dodatkową turę!`;
     rolledDice = null;
     diceResultSpan.textContent = "-";
     selectablePawns = [];
-    document
-      .querySelectorAll(".pawn")
-      .forEach((p) => p.classList.remove("selectable"));
-
+    document.querySelectorAll(".pawn").forEach(p =>
+      p.classList.remove("selectable")
+    );
     canRoll = true;
     rollBtn.disabled = false;
     return;
   }
 
-  // Koniec tury
+  // kolejny gracz
   nextPlayer();
 }
 
 function nextPlayer() {
   selectablePawns = [];
-  document.querySelectorAll(".pawn").forEach((p) =>
+  document.querySelectorAll(".pawn").forEach(p =>
     p.classList.remove("selectable")
   );
   rolledDice = null;
@@ -394,13 +465,11 @@ function nextPlayer() {
   messageP.textContent = "";
   currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
   updateUI();
-
   canRoll = true;
   rollBtn.disabled = false;
 }
 
-// === RZUT KOSTKĄ =====================================================
-
+// --- Rzut kostką -----------------------------------------------------
 rollBtn.addEventListener("click", () => {
   if (winner !== null) return;
   if (!canRoll) return;
@@ -410,7 +479,6 @@ rollBtn.addEventListener("click", () => {
   rolledDice = Math.floor(Math.random() * 6) + 1;
   diceResultSpan.textContent = rolledDice.toString();
 
-  // Blokujemy kolejne rzuty, dopóki gracz nie ruszy pionka / nie minie tura
   canRoll = false;
   rollBtn.disabled = true;
 
@@ -426,8 +494,7 @@ rollBtn.addEventListener("click", () => {
   }
 });
 
-// === START GRY =======================================================
-
+// --- Start gry -------------------------------------------------------
 function initGame() {
   createBoard();
   createPlayers();
