@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chińczyk – HTML / CSS Grid / JS</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Chińczyk (Ludo) – wersja przeglądarkowa</h1>
+
+  <div id="game">
+    <div id="panel">
+      <p>Aktualny gracz: <span id="currentPlayer"></span></p>
+      <p>Wynik rzutu: <span id="diceResult">-</span></p>
+      <button id="rollBtn">Rzuć kostką</button>
+      <p id="message"></p>
+    </div>
+
+    <div id="boardWrapper">
+      <div id="board"></div>
+    </div>
+
+    <div id="playersArea">
+      <div class="playerArea" data-color="red">
+        <h2>Czerwony</h2>
+        <div class="pawnsHome" id="home-red"></div>
+        <p>Zakończone pionki: <span id="finished-red">0</span>/4</p>
+      </div>
+
+      <div class="playerArea" data-color="blue">
+        <h2>Niebieski</h2>
+        <div class="pawnsHome" id="home-blue"></div>
+        <p>Zakończone pionki: <span id="finished-blue">0</span>/4</p>
+      </div>
+
+      <div class="playerArea" data-color="green">
+        <h2>Zielony</h2>
+        <div class="pawnsHome" id="home-green"></div>
+        <p>Zakończone pionki: <span id="finished-green">0</span>/4</p>
+      </div>
+
+      <div class="playerArea" data-color="yellow">
+        <h2>Żółty</h2>
+        <div class="pawnsHome" id="home-yellow"></div>
+        <p>Zakończone pionki: <span id="finished-yellow">0</span>/4</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
