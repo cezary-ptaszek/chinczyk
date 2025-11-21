@@ -98,10 +98,10 @@ const BASE_CELLS = {
 // Po pełnym okrążeniu (40) pionek trafia na ENTRY_INDEX,
 // więc startIndex to (ENTRY_INDEX + 1) % 40.
 const PLAYERS = [
-  { color: "red", startIndex: (ENTRY_INDEX.red + 1) % BOARD_LEN },
-  { color: "blue", startIndex: (ENTRY_INDEX.blue + 1) % BOARD_LEN },
-  { color: "green", startIndex: (ENTRY_INDEX.green + 1) % BOARD_LEN },
-  { color: "yellow", startIndex: (ENTRY_INDEX.yellow + 1) % BOARD_LEN }
+  { color: "czerwony", startIndex: (ENTRY_INDEX.red + 1) % BOARD_LEN },
+  { color: "niebieski", startIndex: (ENTRY_INDEX.blue + 1) % BOARD_LEN },
+  { color: "zielony", startIndex: (ENTRY_INDEX.green + 1) % BOARD_LEN },
+  { color: "żółty", startIndex: (ENTRY_INDEX.yellow + 1) % BOARD_LEN }
 ];
 
 const PAWNS_PER_PLAYER = 4;
