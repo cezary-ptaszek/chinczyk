@@ -2,71 +2,77 @@
 
 const BOARD_SIZE = 11;
 
-// --- Ścieżka po obwodzie (40 pól) ------------------------------------
-const BOARD_PATH = [];
+// === TOR: PĘTLA WOKÓŁ KRZYŻA (40 PÓL) ===============================
+//
+// Idziemy "ramką" wokół centralnego krzyża:
+// - w dół górnym ramieniem
+// - w prawo nad prawym ramieniem
+// - w dół prawym ramieniem
+// - w lewo pod dolnym ramieniem
+// - w górę dolnym ramieniem
+// - w lewo nad lewym ramieniem
+// - w górę lewym ramieniem
+// - w prawo nad górnym ramieniem
 
-// góra (0,0) -> (0,10)
-for (let c = 0; c < BOARD_SIZE; c++) {
-  BOARD_PATH.push({ row: 0, col: c });
+const BOARD_PATH = [];
+function addTrack(r, c) {
+  BOARD_PATH.push({ row: r, col: c });
 }
-// prawa (1,10) -> (10,10)
-for (let r = 1; r < BOARD_SIZE; r++) {
-  BOARD_PATH.push({ row: r, col: BOARD_SIZE - 1 });
-}
-// dół (10,9) -> (10,0)
-for (let c = BOARD_SIZE - 2; c >= 0; c--) {
-  BOARD_PATH.push({ row: BOARD_SIZE - 1, col: c });
-}
-// lewa (9,0) -> (1,0)
-for (let r = BOARD_SIZE - 2; r >= 1; r--) {
-  BOARD_PATH.push({ row: r, col: 0 });
-}
+
+// 1) góra: kolumna 5, rzędy 0..4
+for (let r = 0; r <= 4; r++) addTrack(r, 5);
+// 2) nad prawym ramieniem: rząd 4, kolumny 6..10
+for (let c = 6; c <= 10; c++) addTrack(4, c);
+// 3) w dół prawą stroną: kolumna 10, rzędy 5..10
+for (let r = 5; r <= 10; r++) addTrack(r, 10);
+// 4) pod dolnym ramieniem: rząd 10, kolumny 9..5
+for (let c = 9; c >= 5; c--) addTrack(10, c);
+// 5) w górę dolnym ramieniem: kolumna 5, rzędy 9..6
+for (let r = 9; r >= 6; r--) addTrack(r, 5);
+// 6) nad lewym ramieniem: rząd 6, kolumny 4..0
+for (let c = 4; c >= 0; c--) addTrack(6, c);
+// 7) w górę lewą stroną: kolumna 0, rzędy 5..0
+for (let r = 5; r >= 0; r--) addTrack(r, 0);
+// 8) pod górnym ramieniem: rząd 0, kolumny 1..4
+for (let c = 1; c <= 4; c++) addTrack(0, c);
 
 const BOARD_LEN = BOARD_PATH.length; // 40
 const HOME_LEN = 4;
 
-// --- Home rows (korytarze do domku) ----------------------------------
-// domek = (5,5)
+// === DOMEK i KORYTARZE (home rows) ===================================
 const CENTER = { row: 5, col: 5 };
 
+// Korytarze do domku – specjalne pola w kolorze gracza
+// (nie są częścią pętli, są "w środku" krzyża)
 const HOME_PATH = {
   red: [
-    { row: 1, col: 5 },
-    { row: 2, col: 5 },
-    { row: 3, col: 5 },
-    { row: 4, col: 5 }
+    { row: 4, col: 4 },
+    { row: 3, col: 4 },
+    { row: 2, col: 4 },
+    { row: 1, col: 4 }
   ],
   blue: [
-    { row: 5, col: 9 },
-    { row: 5, col: 8 },
-    { row: 5, col: 7 },
-    { row: 5, col: 6 }
+    { row: 4, col: 6 },
+    { row: 4, col: 7 },
+    { row: 4, col: 8 },
+    { row: 4, col: 9 }
   ],
   yellow: [
-    { row: 9, col: 5 },
-    { row: 8, col: 5 },
-    { row: 7, col: 5 },
-    { row: 6, col: 5 }
+    { row: 6, col: 6 },
+    { row: 7, col: 6 },
+    { row: 8, col: 6 },
+    { row: 9, col: 6 }
   ],
   green: [
-    { row: 5, col: 1 },
-    { row: 5, col: 2 },
-    { row: 5, col: 3 },
-    { row: 5, col: 4 }
+    { row: 6, col: 4 },
+    { row: 6, col: 3 },
+    { row: 6, col: 2 },
+    { row: 6, col: 1 }
   ]
 };
 
-// --- Punkty wejścia do home row na torze -----------------------------
-// Komórki w BOARD_PATH odpowiadające wejściu do korytarzy
-// top: (0,5), right: (5,10), bottom: (10,5), left: (5,0)
-const ENTRY_INDEX = {
-  red: BOARD_PATH.findIndex(p => p.row === 0 && p.col === 5),
-  blue: BOARD_PATH.findIndex(p => p.row === 5 && p.col === 10),
-  yellow: BOARD_PATH.findIndex(p => p.row === 10 && p.col === 5),
-  green: BOARD_PATH.findIndex(p => p.row === 5 && p.col === 0)
-};
+// === BAZY 2×2 W ROGACH ===============================================
 
-// --- Bazy 2x2 w rogach -----------------------------------------------
 const BASE_CELLS = {
   red: [
     { row: 0, col: 0 },
@@ -94,19 +100,43 @@ const BASE_CELLS = {
   ]
 };
 
-// --- Startowe pola na torze ------------------------------------------
-// Po pełnym okrążeniu (40) pionek trafia na ENTRY_INDEX,
-// więc startIndex to (ENTRY_INDEX + 1) % 40.
+// === WYZNACZANIE WEJŚCIA DO DOMKU DLA KAŻDEGO KOLORU =================
+//
+// Szukamy takiego pola na pętli (BOARD_PATH), które jest
+// sąsiadem (góra/dół/lewo/prawo) pierwszego pola w korytarzu HOME_PATH[color][0]
+
+function findEntryIndexForColor(color) {
+  const home0 = HOME_PATH[color][0];
+  for (let i = 0; i < BOARD_PATH.length; i++) {
+    const p = BOARD_PATH[i];
+    const dist =
+      Math.abs(p.row - home0.row) + Math.abs(p.col - home0.col);
+    if (dist === 1) return i;
+  }
+  console.warn("Nie znaleziono wejścia do domku dla koloru:", color);
+  return 0;
+}
+
+const ENTRY_INDEX = {
+  red: findEntryIndexForColor("red"),
+  blue: findEntryIndexForColor("blue"),
+  yellow: findEntryIndexForColor("yellow"),
+  green: findEntryIndexForColor("green")
+};
+
+// Start to pole "za" wejściem – po pełnym okrążeniu (40 kroków)
+// pionek wraca do ENTRY_INDEX i z niego wchodzi do korytarza.
 const PLAYERS = [
-  { color: "czerwony", startIndex: (ENTRY_INDEX.red + 1) % BOARD_LEN },
-  { color: "niebieski", startIndex: (ENTRY_INDEX.blue + 1) % BOARD_LEN },
-  { color: "zielony", startIndex: (ENTRY_INDEX.green + 1) % BOARD_LEN },
-  { color: "żółty", startIndex: (ENTRY_INDEX.yellow + 1) % BOARD_LEN }
+  { color: "red", startIndex: (ENTRY_INDEX.red + 1) % BOARD_LEN },
+  { color: "blue", startIndex: (ENTRY_INDEX.blue + 1) % BOARD_LEN },
+  { color: "green", startIndex: (ENTRY_INDEX.green + 1) % BOARD_LEN },
+  { color: "yellow", startIndex: (ENTRY_INDEX.yellow + 1) % BOARD_LEN }
 ];
 
 const PAWNS_PER_PLAYER = 4;
 
-// --- DOM -------------------------------------------------------------
+// === DOM =============================================================
+
 const boardEl = document.getElementById("board");
 const currentPlayerSpan = document.getElementById("currentPlayer");
 const diceResultSpan = document.getElementById("diceResult");
@@ -123,7 +153,8 @@ let selectablePawns = [];
 let winner = null;
 let canRoll = true;
 
-// --- Tworzenie planszy ----------------------------------------------
+// === TWORZENIE PLANSZY ==============================================
+
 function createBoard() {
   boardEl.innerHTML = "";
   cellMatrix.length = 0;
@@ -142,7 +173,7 @@ function createBoard() {
     cellMatrix.push(rowArr);
   }
 
-  // tor po obwodzie
+  // tor po obwodzie krzyża
   BOARD_PATH.forEach((pos, index) => {
     const cell = cellMatrix[pos.row][pos.col];
     cell.classList.add("track");
@@ -164,7 +195,7 @@ function createBoard() {
     cellMatrix[pos.row][pos.col].classList.add("base-yellow");
   });
 
-  // korytarze do domu
+  // korytarze (home rows) – kolorowane pola
   HOME_PATH.red.forEach(pos => {
     cellMatrix[pos.row][pos.col].classList.add("home-red");
   });
@@ -182,7 +213,8 @@ function createBoard() {
   cellMatrix[CENTER.row][CENTER.col].classList.add("center");
 }
 
-// --- Tworzenie graczy i pionków -------------------------------------
+// === GRACZE I PIONKI ================================================
+
 function createPlayers() {
   players = PLAYERS.map(playerDef => {
     const { color, startIndex } = playerDef;
@@ -195,14 +227,15 @@ function createPlayers() {
         trackIndex: null,
         homeIndex: null,
         stepsMoved: 0,
-        baseIndex: i // który kwadrat w bazie
+        baseIndex: i
       });
     }
     return { color, startIndex, pawns };
   });
 }
 
-// --- Render pionków --------------------------------------------------
+// === RENDEROWANIE PIONKÓW ===========================================
+
 function clearPawnsFromBoard() {
   document.querySelectorAll(".cell .pawn").forEach(el => el.remove());
   document.querySelectorAll(".pawnsHome .pawn").forEach(el => el.remove());
@@ -242,7 +275,8 @@ function renderPawns() {
   });
 }
 
-// --- UI --------------------------------------------------------------
+// === UI =============================================================
+
 function updateUI() {
   const currentPlayer = players[currentPlayerIndex];
   currentPlayerSpan.textContent = currentPlayer.color.toUpperCase();
@@ -255,7 +289,8 @@ function updateUI() {
   renderPawns();
 }
 
-// --- Logika ruchu ----------------------------------------------------
+// === LOGIKA RUCHU ===================================================
+
 function getPawnById(id) {
   for (const player of players) {
     for (const pawn of player.pawns) {
@@ -268,7 +303,7 @@ function getPawnById(id) {
 function computeNewPosition(pawn, player, dice) {
   if (pawn.state === "finished") return { valid: false };
 
-  // z bazy można wyjść tylko na 6
+  // z bazy wychodzimy tylko na 6
   if (pawn.state === "home") {
     if (dice !== 6) return { valid: false };
     return {
@@ -280,17 +315,15 @@ function computeNewPosition(pawn, player, dice) {
     };
   }
 
-  const maxSteps = BOARD_LEN + HOME_LEN; // pełne okrążenie + 4 pola domku
+  const maxSteps = BOARD_LEN + HOME_LEN; // pełna pętla + 4 pola domku
 
   if (pawn.state === "track") {
     const newSteps = pawn.stepsMoved + dice;
-
-    if (newSteps > maxSteps) {
-      return { valid: false };
-    }
+    if (newSteps > maxSteps) return { valid: false };
 
     if (newSteps < BOARD_LEN) {
-      const trackIndex = (player.startIndex + newSteps) % BOARD_LEN;
+      const trackIndex =
+        (player.startIndex + newSteps) % BOARD_LEN;
       return {
         valid: true,
         newState: "track",
@@ -310,8 +343,8 @@ function computeNewPosition(pawn, player, dice) {
       };
     }
 
-    // wejście na korytarz
-    const homeIndex = newSteps - BOARD_LEN; // 0..HOME_LEN-1
+    // wejście do korytarza
+    const homeIndex = newSteps - BOARD_LEN; // 0..3
     return {
       valid: true,
       newState: "homeRow",
@@ -361,7 +394,7 @@ function movePawn(pawn, player, dice) {
   pawn.homeIndex = res.homeIndex;
   pawn.stepsMoved = res.stepsMoved;
 
-  // zbijanie tylko na torze (nie w domkach)
+  // zbijanie tylko na pętli (nie w domkach)
   if (pawn.state === "track") {
     players.forEach(pl => {
       pl.pawns.forEach(other => {
@@ -371,7 +404,6 @@ function movePawn(pawn, player, dice) {
           other.trackIndex === pawn.trackIndex &&
           other.color !== pawn.color
         ) {
-          // wraca do swojej bazy
           other.state = "home";
           other.trackIndex = null;
           other.homeIndex = null;
@@ -388,7 +420,8 @@ function checkWin(player) {
   return player.pawns.every(p => p.state === "finished");
 }
 
-// --- Wybór pionków ---------------------------------------------------
+// === WYBÓR PIONKÓW ==================================================
+
 function highlightSelectablePawns(dice) {
   selectablePawns = [];
   document.querySelectorAll(".pawn").forEach(p =>
@@ -404,12 +437,14 @@ function highlightSelectablePawns(dice) {
   });
 
   selectablePawns.forEach(pawnId => {
-    document.querySelectorAll(`.pawn[data-pawn-id="${pawnId}"]`)
+    document
+      .querySelectorAll(`.pawn[data-pawn-id="${pawnId}"]`)
       .forEach(el => el.classList.add("selectable"));
   });
 }
 
-// --- Klikanie pionków -----------------------------------------------
+// === KLIK PIONKA =====================================================
+
 boardEl.addEventListener("click", onPawnClick);
 
 function onPawnClick(e) {
@@ -437,21 +472,20 @@ function onPawnClick(e) {
     return;
   }
 
-  // dodatkowa tura po 6
+  // 6 = dodatkowa tura
   if (rolledDice === 6) {
     messageP.textContent = `Gracz ${currentPlayer.color.toUpperCase()} wyrzucił 6 i ma dodatkową turę!`;
     rolledDice = null;
     diceResultSpan.textContent = "-";
     selectablePawns = [];
-    document.querySelectorAll(".pawn").forEach(p =>
-      p.classList.remove("selectable")
-    );
+    document
+      .querySelectorAll(".pawn")
+      .forEach(p => p.classList.remove("selectable"));
     canRoll = true;
     rollBtn.disabled = false;
     return;
   }
 
-  // kolejny gracz
   nextPlayer();
 }
 
@@ -469,7 +503,8 @@ function nextPlayer() {
   rollBtn.disabled = false;
 }
 
-// --- Rzut kostką -----------------------------------------------------
+// === RZUT KOSTKĄ =====================================================
+
 rollBtn.addEventListener("click", () => {
   if (winner !== null) return;
   if (!canRoll) return;
@@ -494,7 +529,8 @@ rollBtn.addEventListener("click", () => {
   }
 });
 
-// --- Start gry -------------------------------------------------------
+// === START GRY =======================================================
+
 function initGame() {
   createBoard();
   createPlayers();
